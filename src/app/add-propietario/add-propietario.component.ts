@@ -3,6 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgForm } from '@angular/forms';
 import { PropietarioService } from '../shared/propietario/propietario.service';
+import { CarService } from '../shared/car/car.service';
 
 @Component({
   selector: 'app-add-propietario',
@@ -12,22 +13,24 @@ import { PropietarioService } from '../shared/propietario/propietario.service';
 export class AddPropietarioComponent implements OnInit {
 
   owner: any = {};
+  dni = '';
   sub: Subscription;
 
   constructor(private route: ActivatedRoute,
     private router: Router,
-    private propietarioService: PropietarioService) { }
+    private propietarioService: PropietarioService,
+    private carService: CarService) { }
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
-      const dni = params['dni'];
-      if (dni) {
-        this.propietarioService.get(dni).subscribe((owner: any) => {
+      this.dni = params['dni'];
+      if (this.dni) {
+        this.propietarioService.get(this.dni).subscribe((owner: any) => {
           if (owner) {
-            this.owner = owner;
-            this.owner.href = owner._links.self.href;
+            this.owner = owner._embedded.owners[0];
+            this.owner.href = this.owner._links.self.href;
           } else {
-            console.log(`Owner with dni '${dni}' not found, returning to list`);
+            console.log(`Owner with dni '${this.dni}' not found, returning to list`);
             this.gotoList();
           }
         });
@@ -51,6 +54,20 @@ export class AddPropietarioComponent implements OnInit {
 
   remove(href) {
     this.propietarioService.remove(href).subscribe(result => {
+      this.carService.getAll().subscribe(cars => {
+        cars.map(car => {
+          if (car.ownerDni === this.dni) {
+            this.carService.get(car.id).subscribe((carInfo: any) => {
+              const updateInfo = {
+                name: carInfo.name,
+                ownerDni: null,
+                href: carInfo._links.self.href
+              };
+              this.carService.save(updateInfo).subscribe();
+            });
+          }
+        })
+      })
       this.gotoList();
     }, error => console.error(error));
   }

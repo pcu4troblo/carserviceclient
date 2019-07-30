@@ -1,3 +1,10 @@
 .giphy {
     margin: 10px;
   }
+  .input-href{
+    display: none;
+  } 
+
+  mat-form-field{
+    padding-left: 20px;
+}

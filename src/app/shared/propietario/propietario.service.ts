@@ -19,7 +19,7 @@ export class PropietarioService {
   }
 
   get(dni: string) {
-    return this.http.get(this.API + '/owner/' + dni);
+    return this.http.get(this.API + `/owners/search/findByDni?dni=${dni}`);
   }
 
   save(owner: any): Observable<any> {
